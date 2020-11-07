@@ -1,0 +1,291 @@
+@page "/adultList"
+@using Assignment_3Client.Data
+@using Assignment_3Client.Model
+@inject IAdultServiceA AdultServiceA
+
+
+<h1 xmlns="http://www.w3.org/1999/html">Adult list</h1>
+
+@if (adultToShow == null)
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+@* else if (!adultToShow.Any()) *@
+@* { *@
+@*     <p> *@
+@*         <em style="color: red">Searched adult don`t exist.</em> *@
+@*         <h1 style="color: #3a0647 ;">To continue please reload the page.</h1> *@
+@*     </p> *@
+@* } *@
+else
+{
+    <button id="searchbtn" class="search" @onclick="changeColor">Advanced search ></button>
+    <div class="drop-content" style="display: @disply">
+        <div class="col">
+            <AuthorizeView Policy="SecurityLevel3" Context="moreThan4">
+                <p class="pc">
+                    Filter by User Id: <input type="number" @oninput="@((arg) => FilterByUserId(arg))" style="width:50px"/>
+                </p>
+            </AuthorizeView>
+
+            <p class="pc">
+                Filter by Sex:
+                <select class="form-control selectpicker" @onchange="@((arg) => FilterBySex(arg))" style="width:70px">
+                    <option>All</option>
+                    <option>F</option>
+                    <option>M</option>
+                </select>
+            </p>
+
+            <p class="pc">
+                Filter by Age: <input type="number" @oninput="@((arg) => FilterByAge(arg))" style="width:50px"/>
+            </p>
+        </div>
+
+        <div class="col">
+            <p class="pc">
+                Filter by Name: <input type="text" @oninput="@((arg) => FilterByName(arg))" style="width:200px"/>
+            </p>
+
+            <p class="pc">
+                Filter by Job Title: <input type="text" @oninput="@((arg) => FilterByJobTitle(arg))" style="width:200px"/>
+            </p>
+        </div>
+
+        <div class="col">
+            <p class="pc">
+                Filter by Eye color:
+                <select class="form-control selectpicker" @onchange="@((arg) => FilterByEyeColor(arg))" style="width:100px">
+                    <option>All</option>
+                    <option>Brown</option>
+                    <option>Grey</option>
+                    <option>Green</option>
+                    <option>Blue</option>
+                    <option>Amber</option>
+                    <option>Hazel</option>
+                </select>
+            </p>
+
+            <p class="pc">
+                Filter by Hair color:
+                <select class="form-control selectpicker" @onchange="@((arg) => FilterByHairColor(arg))" style="width:100px">
+                    <option>All</option>
+                    <option>Blond</option>
+                    <option>Red</option>
+                    <option>Brown</option>
+                    <option>Black</option>
+                    <option>White</option>
+                    <option>Grey</option>
+                    <option>Blue</option>
+                    <option>Green</option>
+                    <option>Leverpostej</option>
+                </select>
+            </p>
+        </div>
+    </div>
+
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Eye color</th>
+            <th>Age</th>
+            <th>Hair Color</th>
+            <th>Sex</th>
+            <th>Job</th>
+            <AuthorizeView Policy="SecurityLevel3" Context="moreThan3">
+                <th>Remove</th>
+            </AuthorizeView>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in adultToShow)
+        {
+            <tr>
+                <td>@item.FirstName @item.LastName</td>
+                <td>@item.EyeColor</td>
+                <td>@item.Age</td>
+                <td>@item.HairColor</td>
+                <td>@item.Sex</td>
+                @if (item.JobTitle != null)
+                {
+                    <td>@item.JobTitle</td>
+                }
+                <AuthorizeView Policy="SecurityLevel3" Context="moreThan3">
+                    <td>
+                        <button @onclick="@(() => RemovePerson(item.Id))">
+                            <i class="oi oi-trash" style="color:red"/>
+                        </button>
+                    </td>
+                </AuthorizeView>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IList<Adult> adultToShow;
+    private IList<Adult> allAdults;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        allAdults = await AdultServiceA.GetAdultsAsync();
+        adultToShow = allAdults;
+    }
+
+    private void RemovePerson(int personId)
+    {
+        Adult adultToRemove = adultToShow.First(t => t.Id == personId);
+        AdultServiceA.RemoveAdultsAsync(personId);
+        adultToShow.Remove(adultToRemove);
+    }
+
+    private int? filterById;
+    private int? filterByAge;
+    private string jobTitel;
+    private string filterBySex;
+    private string filterHairColor;
+    private string filterEyeColor;
+    private string filterByName;
+
+    private void FilterByUserId(ChangeEventArgs changeEventArgs)
+    {
+        filterById = null;
+        try
+        {
+            filterById = int.Parse(changeEventArgs.Value.ToString());
+        }
+        catch (Exception e)
+        {
+        }
+
+        adultToShow = allAdults.Where(t =>
+            (filterById != null && t.Id == filterById || filterById == null)
+            ).ToList();
+    }
+
+    private void FilterByAge(ChangeEventArgs changeEventArgs)
+    {
+        filterByAge = null;
+        try
+        {
+            filterByAge = int.Parse(changeEventArgs.Value.ToString());
+        }
+        catch (Exception e)
+        {
+        }
+        ExecuteFilter();
+    }
+
+    private void FilterByJobTitle(ChangeEventArgs args)
+    {
+        jobTitel = null;
+        try
+        {
+            jobTitel = args.Value.ToString();
+        }
+        catch (Exception e)
+        {
+        }
+        ExecuteFilter();
+    }
+
+    private void FilterByName(ChangeEventArgs args)
+    {
+        filterByName = null;
+        try
+        {
+            filterByName = args.Value.ToString();
+        }
+        catch (Exception e)
+        {
+        }
+        ExecuteFilter();
+    }
+
+    private void FilterBySex(ChangeEventArgs args)
+    {
+        filterBySex = null;
+        try
+        {
+            if (args.Value.ToString() == "All")
+            {
+                filterBySex = null;
+            }
+            else
+                filterBySex = args.Value.ToString();
+        }
+        catch (Exception e)
+        {
+        }
+        ExecuteFilter();
+    }
+
+    private void FilterByEyeColor(ChangeEventArgs args)
+    {
+        filterEyeColor = null;
+        try
+        {
+            if (args.Value.ToString() == "All")
+            {
+                filterEyeColor = null;
+            }
+            else
+                filterEyeColor = args.Value.ToString();
+        }
+        catch (Exception e)
+        {
+        }
+        ExecuteFilter();
+    }
+
+    private void FilterByHairColor(ChangeEventArgs args)
+    {
+        filterHairColor = null;
+        try
+        {
+            if (args.Value.ToString() == "All")
+            {
+                filterHairColor = null;
+            }
+            else
+                filterHairColor = args.Value.ToString();
+        }
+        catch (Exception e)
+        {
+        }
+        ExecuteFilter();
+    }
+
+    private void ExecuteFilter()
+    {
+        adultToShow = allAdults.Where(t =>
+            (filterBySex != null && t.Sex.Contains(filterBySex) || filterBySex == null) &&
+            (jobTitel != null && t.JobTitle.Contains(jobTitel) || jobTitel == null) &&
+            (filterByName != null && t.FirstName.Contains(filterByName) || filterByName != null && t.LastName.Contains(filterByName) || filterByName == null) &&
+            (filterByAge != null && t.Age.ToString().Contains(filterByAge.ToString()) || filterByAge == null) &&
+            (filterEyeColor != null && t.EyeColor.Contains(filterEyeColor) || filterEyeColor == null) &&
+            (filterHairColor != null && t.HairColor.Contains(filterHairColor) || filterHairColor == null)
+            ).ToList();
+    }
+
+    string disply = "none";
+
+    private void changeColor()
+    {
+        if (disply == "none")
+        {
+            disply = "flex";
+        }
+        else
+        {
+            disply = "none";
+        }
+    }
+
+}

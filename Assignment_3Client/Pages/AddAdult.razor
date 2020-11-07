@@ -1,0 +1,80 @@
+@page "/AddAdult"
+@using Assignment_3Client.Data
+@using Assignment_3Client.Model
+@inject NavigationManager NavigationManager
+@inject IAdultServiceA AdultService
+@attribute [Authorize(Policy = "SecurityLevel2")]
+
+<h3>AddAdult</h3>
+
+<EditForm Model="@newAdult" OnValidSubmit="@AddNewAdult">
+    <DataAnnotationsValidator/>
+    <ValidationSummary/>
+    
+    <div class="copa">
+        <div class="form-group">
+                Job Title: <InputText @bind-Value="newAdult.JobTitle"/>
+            </div>
+            
+            <div class="form-group">
+                First Name: <InputText @bind-Value="newAdult.FirstName"/>
+            </div>
+            
+            <div class="form-group">
+                Last Name: <InputText @bind-Value="newAdult.LastName"/>
+            </div> 
+            
+            <div class="form-group">
+                    Age:<br/>
+                    <InputNumber @bind-Value="newAdult.Age"/>
+                </div>
+            
+            <div class="form-group">
+                Height: <InputNumber @bind-Value="newAdult.Height"/>
+            </div>
+            
+            <div class="form-group">
+                Sex: <InputText @bind-Value="newAdult.Sex"/>
+            </div>
+            
+            <div class="form-group">
+                Weight: <InputNumber @bind-Value="newAdult.Weight"/>
+            </div>
+            
+            <div class="form-group">
+                Eye Color: <InputText @bind-Value="newAdult.EyeColor"/>
+            </div> 
+            
+            <div class="form-group">
+                Hair Color: <InputText @bind-Value="newAdult.HairColor"/>
+            </div>
+            
+            <p class="actions">
+                <button class="btn btn-outline-dark" type="submit">Create</button>
+            </p>
+    </div>
+    
+</EditForm>
+
+@code {
+    private Adult newAdult = new Adult();
+    
+    private void AddNewAdult()
+    {
+        AdultService.AddAdultsAsync(newAdult);
+        NavigationManager.NavigateTo("/adultList");
+    }
+
+    [CascadingParameter]
+    protected Task<AuthenticationState> AuthStat { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        base.OnInitialized();
+        var user = (await AuthStat).User;
+        if (!user.Identity.IsAuthenticated)
+        {
+            NavigationManager.NavigateTo($"/Login");
+        }
+    }
+}
